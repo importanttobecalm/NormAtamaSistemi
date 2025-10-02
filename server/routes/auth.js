@@ -6,11 +6,14 @@ const router = express.Router();
 const AdminUser = require('../models/AdminUser');
 const Teacher = require('../models/Teacher');
 const { validateAdminLogin, validateTeacherLogin } = require('../middleware/validation');
-
-// Generate JWT token
-const generateToken = (payload) => {
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-};
+const {
+    generateAccessToken,
+    generateRefreshToken,
+    refreshAccessToken,
+    blacklistToken,
+    revokeRefreshToken,
+    auditLog
+} = require('../middleware/securityEnhanced');
 
 // Admin login
 router.post('/admin/login', validateAdminLogin, async (req, res) => {
@@ -32,17 +35,40 @@ router.post('/admin/login', validateAdminLogin, async (req, res) => {
         // Update last login
         await AdminUser.updateLastLogin(adminUser.id);
 
-        // Generate token
-        const token = generateToken({
+        // Generate tokens
+        const accessToken = generateAccessToken({
             id: adminUser.id,
             username: adminUser.username,
             role: adminUser.role,
             userType: 'admin'
         });
 
+        const refreshToken = generateRefreshToken({
+            id: adminUser.id,
+            username: adminUser.username,
+            role: adminUser.role,
+            userType: 'admin'
+        });
+
+        // Set secure HTTP-only cookies
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
         res.json({
             message: 'Giriş başarılı',
-            token,
+            token: accessToken, // Backward compatibility
+            refreshToken,
             user: {
                 id: adminUser.id,
                 username: adminUser.username,
@@ -90,8 +116,8 @@ router.post('/teacher/login', validateTeacherLogin, async (req, res) => {
         // Update last login
         await Teacher.updateLastLogin(teacher.tc_id);
 
-        // Generate token
-        const token = generateToken({
+        // Generate tokens
+        const accessToken = generateAccessToken({
             tcId: teacher.tc_id,
             firstName: teacher.first_name,
             lastName: teacher.last_name,
@@ -99,9 +125,33 @@ router.post('/teacher/login', validateTeacherLogin, async (req, res) => {
             userType: 'teacher'
         });
 
+        const refreshToken = generateRefreshToken({
+            tcId: teacher.tc_id,
+            firstName: teacher.first_name,
+            lastName: teacher.last_name,
+            branch: teacher.branch,
+            userType: 'teacher'
+        });
+
+        // Set secure HTTP-only cookies
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
         res.json({
             message: 'Giriş başarılı',
-            token,
+            token: accessToken, // Backward compatibility
+            refreshToken,
             user: {
                 tcId: teacher.tc_id,
                 firstName: teacher.first_name,
@@ -167,6 +217,75 @@ router.get('/verify', async (req, res) => {
         }
     } catch (error) {
         res.status(401).json({ message: 'Geçersiz token' });
+    }
+});
+
+// Refresh token endpoint
+router.post('/refresh', async (req, res) => {
+    try {
+        const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                message: 'Refresh token bulunamadı',
+                code: 'NO_REFRESH_TOKEN'
+            });
+        }
+
+        const result = refreshAccessToken(refreshToken);
+
+        if (!result.success) {
+            return res.status(401).json({
+                message: 'Geçersiz refresh token',
+                code: 'INVALID_REFRESH_TOKEN'
+            });
+        }
+
+        // Set new access token cookie
+        res.cookie('accessToken', result.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.json({
+            message: 'Token yenilendi',
+            token: result.accessToken
+        });
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// Logout endpoint
+router.post('/logout', async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '') ||
+                     req.cookies?.accessToken;
+        const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+
+        // Blacklist access token
+        if (token) {
+            blacklistToken(token);
+        }
+
+        // Revoke refresh token
+        if (refreshToken) {
+            revokeRefreshToken(refreshToken);
+        }
+
+        // Clear cookies
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        res.json({
+            message: 'Çıkış başarılı'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ message: 'Sunucu hatası' });
     }
 });
 
