@@ -44,10 +44,8 @@ class PreferencePeriod {
 
     static async getCurrentPeriod() {
         try {
-            const now = new Date();
             const [rows] = await pool.execute(
-                'SELECT * FROM preference_periods WHERE start_date <= ? AND end_date >= ? AND status = "active" LIMIT 1',
-                [now, now]
+                'SELECT * FROM preference_periods WHERE start_date <= NOW() AND end_date >= NOW() AND status = "active" LIMIT 1'
             );
             return rows[0] || null;
         } catch (error) {
@@ -95,22 +93,21 @@ class PreferencePeriod {
 
     static async updateStatus() {
         try {
-            const now = new Date();
+            // Use MySQL's NOW() to ensure timezone consistency within the database
+            // This assumes the DB timezone is set correctly (e.g., to Europe/Istanbul)
 
-            // Update periods that should be active
+            // Update upcoming -> active
             await pool.execute(
                 `UPDATE preference_periods
                  SET status = 'active'
-                 WHERE start_date <= ? AND end_date >= ? AND status = 'upcoming'`,
-                [now, now]
+                 WHERE start_date <= NOW() AND end_date >= NOW() AND status = 'upcoming'`
             );
 
-            // Update periods that should be completed
+            // Update active -> completed
             await pool.execute(
                 `UPDATE preference_periods
                  SET status = 'completed'
-                 WHERE end_date < ? AND status = 'active'`,
-                [now]
+                 WHERE end_date < NOW() AND status = 'active'`
             );
 
             return true;
