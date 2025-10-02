@@ -30,8 +30,8 @@ router.get('/teachers/:periodId', adminAuthMiddleware, async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Öğretmenler ve Tercihler');
 
-        // Set column headers
-        worksheet.columns = [
+        // Build column headers array
+        const columns = [
             { header: 'TC Kimlik', key: 'tc_id', width: 15 },
             { header: 'Ad', key: 'first_name', width: 15 },
             { header: 'Soyad', key: 'last_name', width: 15 },
@@ -42,12 +42,15 @@ router.get('/teachers/:periodId', adminAuthMiddleware, async (req, res) => {
 
         // Add preference columns (up to 25)
         for (let i = 1; i <= 25; i++) {
-            worksheet.columns.push({
+            columns.push({
                 header: `Tercih ${i}`,
                 key: `preference_${i}`,
                 width: 30
             });
         }
+
+        // Set columns
+        worksheet.columns = columns;
 
         // Style header row
         worksheet.getRow(1).font = { bold: true };
