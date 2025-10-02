@@ -12,12 +12,12 @@ async function createAdmin() {
         if (existingAdmin.length > 0) {
             console.log('✅ Admin kullanıcısı zaten mevcut');
             console.log('Username: admin');
-            console.log('Password: admin123');
+            console.log('Password: Admin123');
             process.exit(0);
         }
 
         // Hash the password
-        const password = 'admin123';
+        const password = 'Admin123';
         const passwordHash = await bcrypt.hash(password, 10);
 
         // Insert admin user
@@ -28,7 +28,7 @@ async function createAdmin() {
 
         console.log('✅ Admin kullanıcısı başarıyla oluşturuldu!');
         console.log('Username: admin');
-        console.log('Password: admin123');
+        console.log('Password: Admin123');
 
         process.exit(0);
     } catch (error) {
