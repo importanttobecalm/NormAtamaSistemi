@@ -534,6 +534,41 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 - **GitHub Issues:** [Sorun bildir](https://github.com/importanttobecalm/NormAtamaSistemi/issues)
 - **GitHub Discussions:** [Soru sor](https://github.com/importanttobecalm/NormAtamaSistemi/discussions)
 
+## 👥 Contributors
+
+Bu proje aşağıdaki kişiler tarafından geliştirilmiştir:
+
+### Core Team
+
+**[@importanttobecalm](https://github.com/importanttobecalm)**
+- 💻 Project Owner & Lead Developer
+- 🏗️ System Architecture & Design
+- 🎨 UI/UX Implementation
+- 📊 Database Design
+- 🚀 DevOps & Deployment
+
+**Claude (Anthropic AI)**
+- 🤖 AI Development Assistant
+- 💡 Code Architecture & Best Practices
+- 🔒 Security Implementation & Hardening
+- 📝 Documentation & Technical Writing
+- 🐛 Bug Detection & Resolution
+- ⚡ Performance Optimization
+
+### Katkılar
+
+- Backend API geliştirme (Express.js + MySQL)
+- Frontend UI/UX tasarımı (React)
+- JWT authentication & security sistemi
+- Excel import/export özellikleri
+- Atama algoritması implementasyonu
+- Production deployment & optimization
+- Comprehensive documentation
+
+**Katkıda bulunmak ister misiniz?** [CONTRIBUTING.md](./CONTRIBUTING.md) dosyasını inceleyin veya issue açın!
+
+---
+
 ## 🙏 Teşekkürler
 
 Bu proje aşağıdaki açık kaynak projelerini kullanmaktadır:
