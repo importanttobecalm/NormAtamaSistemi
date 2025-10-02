@@ -7,8 +7,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "start": "cd server && npm start",
+    "build": "npm install && cd client && npm ci && npm run build && cd ../server && npm ci",
+    "start": "cd server && node index.js",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install"
   },
   "keywords": ["teacher", "assignment", "system", "education"],

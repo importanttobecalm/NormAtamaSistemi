@@ -38,7 +38,10 @@
       "Bash(railway service:*)",
       "Bash(git add:*)",
       "Bash(del servernul)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(railway up:*)",
+      "Bash(railway link:*)"
     ],
     "deny": [],
     "ask": []
