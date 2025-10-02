@@ -15,28 +15,33 @@ function Statistics() {
 
     const fetchPeriods = async () => {
         try {
-            const response = await axios.get('/api/admin/periods', {
+            const response = await axios.get('/admin/periods', {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            setPeriods(response.data);
-            if (response.data.length > 0) {
-                setSelectedPeriod(response.data[0].id);
+
+            // Ensure response.data is an array
+            const periodsData = Array.isArray(response.data) ? response.data : [];
+            setPeriods(periodsData);
+
+            if (periodsData.length > 0) {
+                setSelectedPeriod(periodsData[0].id);
             }
         } catch (error) {
             console.error('Error fetching periods:', error);
+            setPeriods([]); // Set to empty array on error
         }
     };
 
     const fetchStatistics = async (periodId) => {
         try {
             setLoading(true);
-            const response = await axios.get(`/api/admin/assignments/statistics/${periodId}`, {
+            const response = await axios.get(`/admin/assignments/statistics/${periodId}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setStatistics(response.data);
         } catch (error) {
             console.error('Error fetching statistics:', error);
-            alert('İstatistikler yüklenemedi');
+            alert(error.response?.data?.message || 'İstatistikler yüklenemedi');
         } finally {
             setLoading(false);
         }
@@ -54,7 +59,7 @@ function Statistics() {
 
         try {
             setAssigning(true);
-            const response = await axios.post(`/api/admin/assignments/run/${selectedPeriod}`, {}, {
+            const response = await axios.post(`/admin/assignments/run/${selectedPeriod}`, {}, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
 
@@ -63,6 +68,7 @@ function Statistics() {
             // Refresh statistics
             fetchStatistics(selectedPeriod);
         } catch (error) {
+            console.error('Assignment error:', error);
             alert(error.response?.data?.message || 'Atama işlemi başarısız');
         } finally {
             setAssigning(false);
