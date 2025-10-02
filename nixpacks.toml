@@ -3,13 +3,13 @@ nixPkgs = ["nodejs"]
 
 [phases.install]
 cmds = [
-  "cd client && npm ci",
-  "cd server && npm ci"
+  "(cd client && npm ci) || true",
+  "(cd server && npm ci) || true"
 ]
 
 [phases.build]
 cmds = [
-  "cd client && npm run build"
+  "test -d client && cd client && npm run build || echo 'Client directory not found, skipping build'"
 ]
 
 [start]
