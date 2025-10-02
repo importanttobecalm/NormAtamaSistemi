@@ -42,3 +42,7 @@ coverage/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Development files (not needed in production)
+package.json.dev
+package-lock.json.dev
