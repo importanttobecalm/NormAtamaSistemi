@@ -28,12 +28,35 @@ const PORT = process.env.PORT || 5000;
 // Trust proxy - needed for rate limiting to work correctly
 app.set('trust proxy', 1);
 
+// HTTPS redirect middleware (production only)
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        if (req.header('x-forwarded-proto') !== 'https') {
+            res.redirect(`https://${req.header('host')}${req.url}`);
+        } else {
+            next();
+        }
+    });
+}
+
 // Cookie parser - HTTPS-only cookies için
 app.use(cookieParser());
 
-// Security middleware - React için uyumlu güvenlik başlıkları
+// Security middleware - React için optimize edilmiş güvenlik başlıkları
 app.use(helmet({
-    contentSecurityPolicy: false, // React build için CSP'yi devre dışı bırak
+    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"], // React için gerekli
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
+        }
+    } : false,
     crossOriginEmbedderPolicy: false,
     hsts: process.env.NODE_ENV === 'production' ? {
         maxAge: 31536000,
@@ -41,7 +64,8 @@ app.use(helmet({
         preload: true
     } : false,
     noSniff: true,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    frameguard: { action: 'deny' }
 }));
 
 // HTTP Parameter Pollution koruması

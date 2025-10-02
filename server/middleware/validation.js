@@ -78,10 +78,14 @@ const validatePreferencePeriod = [
 const validateAdminLogin = [
     body('username')
         .isLength({ min: 3, max: 50 })
-        .withMessage('Kullanıcı adı 3-50 karakter arasında olmalıdır'),
+        .withMessage('Kullanıcı adı 3-50 karakter arasında olmalıdır')
+        .trim()
+        .escape(),
     body('password')
-        .isLength({ min: 6 })
-        .withMessage('Şifre en az 6 karakter olmalıdır'),
+        .isLength({ min: 8 })
+        .withMessage('Şifre en az 8 karakter olmalıdır')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+        .withMessage('Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir'),
     handleValidationErrors
 ];
 
