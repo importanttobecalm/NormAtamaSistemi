@@ -118,11 +118,17 @@ app.use('/api/teacher/preferences', teacherPreferenceRoutes);
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/build')));
+    // Docker path: /app/client/build, Local path: ../client/build
+    const clientBuildPath = path.join(__dirname, '../client/build');
+
+    console.log('📁 Serving static files from:', clientBuildPath);
+    app.use(express.static(clientBuildPath));
 
     // Handle React routing, return all requests to React app
     app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+        const indexPath = path.join(clientBuildPath, 'index.html');
+        console.log('📄 Sending index.html from:', indexPath);
+        res.sendFile(indexPath);
     });
 } else {
     // 404 handler for development
