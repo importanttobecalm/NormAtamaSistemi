@@ -2,8 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const hpp = require('hpp');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+const { detectSuspiciousActivity } = require('./middleware/securityEnhanced');
 
 const { testConnection } = require('./config/database');
 
@@ -24,11 +28,44 @@ const PORT = process.env.PORT || 5000;
 // Trust proxy - needed for rate limiting to work correctly
 app.set('trust proxy', 1);
 
-// Security middleware - configure for production
+// Cookie parser - HTTPS-only cookies için
+app.use(cookieParser());
+
+// Security middleware - Gelişmiş güvenlik başlıkları
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for React app
-    crossOriginEmbedderPolicy: false
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
+
+// HTTP Parameter Pollution koruması
+app.use(hpp());
+
+// XSS koruması için ek header
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -67,6 +104,9 @@ app.use('/api', (req, res, next) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     next();
 });
+
+// Şüpheli aktivite tespiti
+app.use(detectSuspiciousActivity);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
