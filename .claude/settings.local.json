@@ -41,7 +41,10 @@
       "Bash(git commit:*)",
       "Bash(git config:*)",
       "Bash(railway up:*)",
-      "Bash(railway link:*)"
+      "Bash(railway link:*)",
+      "Bash(start https://github.com/new)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
