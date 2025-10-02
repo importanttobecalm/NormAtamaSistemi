@@ -171,30 +171,43 @@ router.get('/assignments/:periodId', adminAuthMiddleware, async (req, res) => {
         });
 
         // Add data
-        assignments.forEach(assignment => {
-            if (assignment.status === 'assigned') {
-                assignedSheet.addRow({
-                    tc_id: assignment.tc_id,
-                    first_name: assignment.first_name,
-                    last_name: assignment.last_name,
-                    branch: assignment.branch,
-                    placement_points: assignment.placement_points,
-                    assigned_school: assignment.assigned_school,
-                    assigned_district: assignment.assigned_district,
-                    preference_rank: assignment.preference_rank,
-                    assigned_at: assignment.assigned_at ? new Date(assignment.assigned_at).toLocaleString('tr-TR') : ''
-                });
-            } else {
-                unassignedSheet.addRow({
-                    tc_id: assignment.tc_id,
-                    first_name: assignment.first_name,
-                    last_name: assignment.last_name,
-                    branch: assignment.branch,
-                    placement_points: assignment.placement_points,
-                    current_assignment: assignment.current_assignment || ''
-                });
-            }
-        });
+        if (Array.isArray(assignments)) {
+            assignments.forEach(assignment => {
+                if (assignment.status === 'assigned') {
+                    // Format date safely without locale dependency
+                    let formattedDate = '';
+                    if (assignment.assigned_at) {
+                        try {
+                            const date = new Date(assignment.assigned_at);
+                            formattedDate = date.toISOString().replace('T', ' ').substring(0, 19);
+                        } catch (e) {
+                            formattedDate = '';
+                        }
+                    }
+
+                    assignedSheet.addRow({
+                        tc_id: assignment.tc_id,
+                        first_name: assignment.first_name,
+                        last_name: assignment.last_name,
+                        branch: assignment.branch,
+                        placement_points: assignment.placement_points,
+                        assigned_school: assignment.assigned_school,
+                        assigned_district: assignment.assigned_district,
+                        preference_rank: assignment.preference_rank,
+                        assigned_at: formattedDate
+                    });
+                } else {
+                    unassignedSheet.addRow({
+                        tc_id: assignment.tc_id,
+                        first_name: assignment.first_name,
+                        last_name: assignment.last_name,
+                        branch: assignment.branch,
+                        placement_points: assignment.placement_points,
+                        current_assignment: assignment.current_assignment || ''
+                    });
+                }
+            });
+        }
 
         // Set response headers
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
