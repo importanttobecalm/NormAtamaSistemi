@@ -13,15 +13,20 @@ function Reports() {
 
     const fetchPeriods = async () => {
         try {
-            const response = await axios.get('/api/admin/periods', {
+            const response = await axios.get('/admin/periods', {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            setPeriods(response.data);
-            if (response.data.length > 0) {
-                setSelectedPeriod(response.data[0].id);
+
+            // Ensure response.data is an array
+            const periodsData = Array.isArray(response.data) ? response.data : [];
+            setPeriods(periodsData);
+
+            if (periodsData.length > 0) {
+                setSelectedPeriod(periodsData[0].id);
             }
         } catch (error) {
             console.error('Error fetching periods:', error);
+            setPeriods([]); // Set to empty array on error
         }
     };
 
@@ -33,7 +38,7 @@ function Reports() {
 
         try {
             setDownloading(endpoint);
-            const response = await axios.get(`/api/admin/reports/${endpoint}/${selectedPeriod}`, {
+            const response = await axios.get(`/admin/reports/${endpoint}/${selectedPeriod}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 responseType: 'blob'
             });
@@ -49,7 +54,7 @@ function Reports() {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Download error:', error);
-            alert('Rapor indirilemedi');
+            alert(error.response?.data?.message || 'Rapor indirilemedi');
         } finally {
             setDownloading(null);
         }
