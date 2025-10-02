@@ -33,17 +33,17 @@ app.use(helmet({
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 300, // limit each IP to 300 requests per windowMs
     message: 'Çok fazla istek gönderdiniz. Lütfen bir süre bekleyiniz.',
     standardHeaders: true,
     legacyHeaders: false
 });
 app.use(limiter);
 
-// Stricter rate limiting for login endpoints
+// Rate limiting for login endpoints
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 login attempts per windowMs
+    max: 20, // limit each IP to 20 login attempts per windowMs
     message: 'Çok fazla giriş denemesi. 15 dakika sonra tekrar deneyiniz.',
     skipSuccessfulRequests: true,
     standardHeaders: true,
