@@ -70,8 +70,13 @@ const Login = () => {
       return false;
     }
 
-    if (!formData.password || formData.password.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır');
+    if (!formData.password || formData.password.length < 8) {
+      setError('Şifre en az 8 karakter olmalıdır');
+      return false;
+    }
+
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      setError('Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir');
       return false;
     }
 

@@ -79,8 +79,7 @@ const validateAdminLogin = [
     body('username')
         .isLength({ min: 3, max: 50 })
         .withMessage('Kullanıcı adı 3-50 karakter arasında olmalıdır')
-        .trim()
-        .escape(),
+        .trim(),
     body('password')
         .isLength({ min: 8 })
         .withMessage('Şifre en az 8 karakter olmalıdır')
