@@ -18,7 +18,7 @@ const TeacherPreferences = () => {
       setError(null);
 
       // First get active period
-      const periodRes = await axios.get('/teacher/preferences/active-period');
+      const periodRes = await axios.get('/teacher/preferences/period-status');
       setPeriodStatus(periodRes.data);
 
       if (!periodRes.data.hasActivePeriod) {
