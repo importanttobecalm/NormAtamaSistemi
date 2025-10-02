@@ -97,88 +97,6 @@ const revokeRefreshToken = (refreshToken) => {
     refreshTokens.delete(refreshToken);
 };
 
-// Gelişmiş token doğrulama middleware
-const enhancedAuthMiddleware = async (req, res, next) => {
-    try {
-        const token = req.header('Authorization')?.replace('Bearer ', '') ||
-                     req.cookies?.accessToken;
-
-        if (!token) {
-            return res.status(401).json({
-                message: 'Erişim reddedildi. Token bulunamadı.',
-                code: 'NO_TOKEN'
-            });
-        }
-
-        // Blacklist kontrolü
-        if (isTokenBlacklisted(token)) {
-            return res.status(401).json({
-                message: 'Token geçersiz kılındı.',
-                code: 'TOKEN_REVOKED'
-            });
-        }
-
-        // Token doğrulama
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Token tipi kontrolü
-        if (decoded.type !== 'access') {
-            return res.status(401).json({
-                message: 'Geçersiz token tipi.',
-                code: 'INVALID_TOKEN_TYPE'
-            });
-        }
-
-        // Request'e kullanıcı bilgisi ekle
-        req.user = decoded;
-        req.token = token;
-
-        // Güvenlik logları için
-        req.securityContext = {
-            userId: decoded.id || decoded.tcId,
-            userType: decoded.userType,
-            tokenId: decoded.tokenId,
-            ip: req.ip,
-            userAgent: req.get('user-agent')
-        };
-
-        next();
-    } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({
-                message: 'Token süresi doldu. Lütfen yeniden giriş yapın.',
-                code: 'TOKEN_EXPIRED'
-            });
-        }
-
-        return res.status(401).json({
-            message: 'Geçersiz token.',
-            code: 'INVALID_TOKEN'
-        });
-    }
-};
-
-// Audit log için middleware
-const auditLog = (action) => {
-    return (req, res, next) => {
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            action,
-            userId: req.securityContext?.userId,
-            userType: req.securityContext?.userType,
-            ip: req.ip,
-            userAgent: req.get('user-agent'),
-            path: req.path,
-            method: req.method
-        };
-
-        // Production'da bu loglar veritabanına veya log servisine yazılmalı
-        console.log('[AUDIT]', JSON.stringify(logEntry));
-
-        next();
-    };
-};
-
 // Suspicious activity detection
 const detectSuspiciousActivity = (req, res, next) => {
     const suspiciousPatterns = [
@@ -214,7 +132,5 @@ module.exports = {
     blacklistToken,
     revokeRefreshToken,
     isTokenBlacklisted,
-    enhancedAuthMiddleware,
-    auditLog,
     detectSuspiciousActivity
 };

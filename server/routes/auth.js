@@ -11,8 +11,7 @@ const {
     generateRefreshToken,
     refreshAccessToken,
     blacklistToken,
-    revokeRefreshToken,
-    auditLog
+    revokeRefreshToken
 } = require('../middleware/securityEnhanced');
 
 // Admin login
