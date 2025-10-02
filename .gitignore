@@ -46,3 +46,6 @@ Thumbs.db
 # Development files (not needed in production)
 package.json.dev
 package-lock.json.dev
+
+# Claude Code settings (local only)
+.claude/settings.local.json
