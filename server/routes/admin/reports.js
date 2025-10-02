@@ -94,7 +94,12 @@ router.get('/teachers/:periodId', adminAuthMiddleware, async (req, res) => {
         res.end();
     } catch (error) {
         console.error('Export teachers error:', error);
-        res.status(500).json({ message: 'Sunucu hatası' });
+        console.error('Error details:', error.message);
+        console.error('Stack:', error.stack);
+        res.status(500).json({
+            message: 'Rapor oluşturulurken hata oluştu',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
@@ -197,7 +202,12 @@ router.get('/assignments/:periodId', adminAuthMiddleware, async (req, res) => {
         res.end();
     } catch (error) {
         console.error('Export assignments error:', error);
-        res.status(500).json({ message: 'Sunucu hatası' });
+        console.error('Error details:', error.message);
+        console.error('Stack:', error.stack);
+        res.status(500).json({
+            message: 'Rapor oluşturulurken hata oluştu',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
@@ -266,7 +276,12 @@ router.get('/positions/:periodId', adminAuthMiddleware, async (req, res) => {
         res.end();
     } catch (error) {
         console.error('Export positions error:', error);
-        res.status(500).json({ message: 'Sunucu hatası' });
+        console.error('Error details:', error.message);
+        console.error('Stack:', error.stack);
+        res.status(500).json({
+            message: 'Rapor oluşturulurken hata oluştu',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
