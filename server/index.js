@@ -53,7 +53,7 @@ const loginLimiter = rateLimit({
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? ['http://localhost:3000'] // Add your production domain here
+        ? ['https://normatamasistemi-production.up.railway.app', 'http://localhost:3000']
         : ['http://localhost:3000'],
     credentials: true
 }));
