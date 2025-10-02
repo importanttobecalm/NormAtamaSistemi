@@ -1,16 +1,16 @@
 [phases.setup]
-nixPkgs = ["nodejs"]
+nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
 cmds = [
-  "(cd client && npm ci) || true",
-  "(cd server && npm ci) || true"
+  "npm install --prefix client",
+  "npm install --prefix server"
 ]
 
 [phases.build]
 cmds = [
-  "test -d client && cd client && npm run build || echo 'Client directory not found, skipping build'"
+  "npm run build --prefix client"
 ]
 
 [start]
-cmd = "cd server && node index.js"
+cmd = "node server/index.js"
