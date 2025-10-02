@@ -6,6 +6,7 @@ const TeacherPreferences = () => {
   const [availablePositions, setAvailablePositions] = useState([]);
   const [myPreferences, setMyPreferences] = useState([]);
   const [periodStatus, setPeriodStatus] = useState(null);
+  const [activePeriodId, setActivePeriodId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,18 +17,28 @@ const TeacherPreferences = () => {
       setLoading(true);
       setError(null);
 
-      const [periodRes, positionsRes, myPrefsRes] = await Promise.all([
-        axios.get('/teacher/preferences/period-status'),
-        axios.get('/teacher/preferences/positions'),
-        axios.get('/teacher/preferences/my-preferences'),
-      ]);
-
+      // First get active period
+      const periodRes = await axios.get('/teacher/preferences/active-period');
       setPeriodStatus(periodRes.data);
+
+      if (!periodRes.data.hasActivePeriod) {
+        setLoading(false);
+        return;
+      }
+
+      const periodId = periodRes.data.period.id;
+      setActivePeriodId(periodId);
+
+      // Then fetch positions and preferences with periodId
+      const [positionsRes, myPrefsRes] = await Promise.all([
+        axios.get(`/teacher/preferences/positions/${periodId}`),
+        axios.get(`/teacher/preferences/my-preferences/${periodId}`),
+      ]);
 
       const preferredPositionIds = new Set(myPrefsRes.data.preferences.map(p => p.position_id));
       const available = positionsRes.data.filter(p => !preferredPositionIds.has(p.id));
       setAvailablePositions(available);
-      
+
       const sortedPreferences = myPrefsRes.data.preferences.sort((a, b) => a.preference_rank - b.preference_rank);
       setMyPreferences(sortedPreferences);
 
@@ -82,6 +93,11 @@ const TeacherPreferences = () => {
       return;
     }
 
+    if (!activePeriodId) {
+      alert('Aktif dönem bulunamadı.');
+      return;
+    }
+
     setSaving(true);
     try {
       const preferencesToSave = myPreferences.map((pref, index) => ({
@@ -89,7 +105,10 @@ const TeacherPreferences = () => {
         rank: index + 1,
       }));
 
-      await axios.post('/teacher/preferences/save', { preferences: preferencesToSave });
+      await axios.post('/teacher/preferences/save', {
+        periodId: activePeriodId,
+        preferences: preferencesToSave
+      });
       alert('Tercihleriniz başarıyla kaydedildi.');
       fetchData(); // Re-fetch to confirm
     } catch (err) {
