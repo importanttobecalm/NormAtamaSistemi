@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const { pool } = require('../config/database');
 
-// In-memory token blacklist (production'da Redis kullanılmalı)
+// In-memory token blacklist for access tokens (production'da Redis kullanılmalı)
 const tokenBlacklist = new Set();
-const refreshTokens = new Map(); // refreshToken -> { userId, userType, createdAt }
 
 // Token blacklist kontrolü
 const isTokenBlacklisted = (token) => {
@@ -13,10 +13,10 @@ const isTokenBlacklisted = (token) => {
 // Token'ı blacklist'e ekle
 const blacklistToken = (token) => {
     tokenBlacklist.add(token);
-    // 24 saat sonra otomatik temizle
+    // 15 dakika sonra otomatik temizle (access token ömrü kadar)
     setTimeout(() => {
         tokenBlacklist.delete(token);
-    }, 24 * 60 * 60 * 1000);
+    }, 15 * 60 * 1000);
 };
 
 // Access token oluştur (kısa ömürlü - 15 dakika)
@@ -32,11 +32,14 @@ const generateAccessToken = (payload) => {
     );
 };
 
-// Refresh token oluştur (uzun ömürlü - 7 gün)
-const generateRefreshToken = (payload) => {
+// Refresh token oluştur ve veritabanına kaydet (uzun ömürlü - 7 gün)
+const generateRefreshToken = async (payload) => {
+    const userId = payload.id || payload.tcId;
+    if (!userId) throw new Error('User ID is required to generate a refresh token');
+
     const refreshToken = jwt.sign(
         {
-            userId: payload.id || payload.tcId,
+            userId: userId,
             userType: payload.userType,
             tokenId: uuidv4(),
             type: 'refresh'
@@ -45,29 +48,35 @@ const generateRefreshToken = (payload) => {
         { expiresIn: '7d' }
     );
 
-    // Refresh token'ı sakla
-    refreshTokens.set(refreshToken, {
-        userId: payload.id || payload.tcId,
-        userType: payload.userType,
-        createdAt: Date.now()
-    });
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // 7 gün sonra otomatik temizle
-    setTimeout(() => {
-        refreshTokens.delete(refreshToken);
-    }, 7 * 24 * 60 * 60 * 1000);
+    await pool.execute(
+        'INSERT INTO refresh_tokens (user_id, user_type, token, expires_at) VALUES (?, ?, ?, ?)',
+        [userId, payload.userType, refreshToken, expiresAt]
+    );
 
     return refreshToken;
 };
 
 // Refresh token doğrula ve yeni access token oluştur
-const refreshAccessToken = (refreshToken) => {
+const refreshAccessToken = async (refreshToken) => {
     try {
-        // Refresh token geçerli mi kontrol et
-        if (!refreshTokens.has(refreshToken)) {
-            throw new Error('Invalid refresh token');
+        // Refresh token veritabanında var mı ve süresi geçerli mi kontrol et
+        const [rows] = await pool.execute(
+            'SELECT * FROM refresh_tokens WHERE token = ? AND expires_at > NOW()',
+            [refreshToken]
+        );
+
+        const storedToken = rows[0];
+        if (!storedToken) {
+            // Geçersiz veya süresi dolmuş token'ları temizle
+            if (rows[0]) {
+                await pool.execute('DELETE FROM refresh_tokens WHERE token = ?', [refreshToken]);
+            }
+            throw new Error('Invalid or expired refresh token');
         }
 
+        // JWT'yi doğrula
         const decoded = jwt.verify(
             refreshToken,
             process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh'
@@ -76,8 +85,6 @@ const refreshAccessToken = (refreshToken) => {
         if (decoded.type !== 'refresh') {
             throw new Error('Invalid token type');
         }
-
-        const tokenData = refreshTokens.get(refreshToken);
 
         // Yeni access token oluştur
         const newAccessToken = generateAccessToken({
@@ -88,13 +95,19 @@ const refreshAccessToken = (refreshToken) => {
 
         return { success: true, accessToken: newAccessToken };
     } catch (error) {
+        console.error('Error refreshing access token:', error.message);
         return { success: false, error: error.message };
     }
 };
 
-// Refresh token iptal et
-const revokeRefreshToken = (refreshToken) => {
-    refreshTokens.delete(refreshToken);
+// Refresh token iptal et (veritabanından sil)
+const revokeRefreshToken = async (refreshToken) => {
+    if (!refreshToken) return;
+    try {
+        await pool.execute('DELETE FROM refresh_tokens WHERE token = ?', [refreshToken]);
+    } catch (error) {
+        console.error('Error revoking refresh token:', error.message);
+    }
 };
 
 // Suspicious activity detection

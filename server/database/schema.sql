@@ -79,6 +79,18 @@ CREATE TABLE preferences (
     CHECK (preference_rank >= 1 AND preference_rank <= 25)
 );
 
+-- Refresh tokens table for persistent sessions
+CREATE TABLE refresh_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    user_type ENUM('admin', 'teacher') NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_token (token(255)),
+    INDEX idx_user_id (user_id)
+);
+
 -- Insert default admin user (password: admin123)
 INSERT INTO admin_users (username, password_hash, role)
 VALUES ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super_admin');

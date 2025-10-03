@@ -8,7 +8,7 @@ const { teacherAuthMiddleware } = require('../../middleware/auth');
 const { validatePreferences } = require('../../middleware/validation');
 
 // Get available positions for teacher's branch
-router.get('/positions', teacherAuthMiddleware, async (req, res) => {
+router.get('/positions/:periodId?', teacherAuthMiddleware, async (req, res) => {
     try {
         const teacher = req.teacher;
         const positions = await Position.getByBranch(teacher.branch);
@@ -21,7 +21,7 @@ router.get('/positions', teacherAuthMiddleware, async (req, res) => {
 });
 
 // Get teacher's current preferences
-router.get('/my-preferences', teacherAuthMiddleware, async (req, res) => {
+router.get('/my-preferences/:periodId?', teacherAuthMiddleware, async (req, res) => {
     try {
         // Update period statuses first
         await PreferencePeriod.updateStatus();

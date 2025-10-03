@@ -42,7 +42,7 @@ router.post('/admin/login', validateAdminLogin, async (req, res) => {
             userType: 'admin'
         });
 
-        const refreshToken = generateRefreshToken({
+        const refreshToken = await generateRefreshToken({
             id: adminUser.id,
             username: adminUser.username,
             role: adminUser.role,
@@ -124,7 +124,7 @@ router.post('/teacher/login', validateTeacherLogin, async (req, res) => {
             userType: 'teacher'
         });
 
-        const refreshToken = generateRefreshToken({
+        const refreshToken = await generateRefreshToken({
             tcId: teacher.tc_id,
             firstName: teacher.first_name,
             lastName: teacher.last_name,
@@ -231,7 +231,7 @@ router.post('/refresh', async (req, res) => {
             });
         }
 
-        const result = refreshAccessToken(refreshToken);
+        const result = await refreshAccessToken(refreshToken);
 
         if (!result.success) {
             return res.status(401).json({
