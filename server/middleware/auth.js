@@ -4,7 +4,8 @@ const Teacher = require('../models/Teacher');
 
 const authMiddleware = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        // Try to get token from Authorization header or cookie
+        const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies?.accessToken;
 
         if (!token) {
             return res.status(401).json({ message: 'Erişim reddedildi. Token bulunamadı.' });
@@ -20,7 +21,8 @@ const authMiddleware = async (req, res, next) => {
 
 const adminAuthMiddleware = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        // Try to get token from Authorization header or cookie
+        const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies?.accessToken;
 
         if (!token) {
             return res.status(401).json({ message: 'Erişim reddedildi. Token bulunamadı.' });
@@ -47,7 +49,8 @@ const adminAuthMiddleware = async (req, res, next) => {
 
 const teacherAuthMiddleware = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        // Try to get token from Authorization header or cookie
+        const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies?.accessToken;
 
         if (!token) {
             return res.status(401).json({ message: 'Erişim reddedildi. Token bulunamadı.' });

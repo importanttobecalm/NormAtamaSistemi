@@ -170,7 +170,8 @@ router.post('/teacher/login', validateTeacherLogin, async (req, res) => {
 // Verify token
 router.get('/verify', async (req, res) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        // Try to get token from Authorization header or cookie
+        const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies?.accessToken;
 
         if (!token) {
             return res.status(401).json({ message: 'Token bulunamadı' });
