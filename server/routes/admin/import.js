@@ -6,8 +6,27 @@ const bcrypt = require("bcryptjs");
 const { pool } = require("../../config/database");
 const { adminAuthMiddleware } = require("../../middleware/auth");
 
-// Configure multer for memory storage
-const upload = multer({ storage: multer.memoryStorage() });
+// Configure multer for memory storage with size limits
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB max file size
+        files: 1 // Only one file at a time
+    },
+    fileFilter: (req, file, cb) => {
+        // Only accept Excel files
+        const allowedMimes = [
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel.sheet.macroEnabled.12'
+        ];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Sadece Excel dosyaları (.xls, .xlsx) kabul edilir'));
+        }
+    }
+});
 
 // Bulk import teachers from Excel
 router.post(

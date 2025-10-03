@@ -189,7 +189,10 @@ app.use('/api/admin/reports', adminReportRoutes);
 app.use('/api/teacher/profile', teacherProfileRoutes);
 app.use('/api/teacher/preferences', teacherPreferenceRoutes);
 app.use('/api/migrate', migrateRoutes);
-app.use('/api/setup-db', setupDbRoutes);
+// SECURITY: Setup endpoint only available in development
+if (process.env.NODE_ENV !== 'production') {
+    app.use('/api/setup-db', setupDbRoutes);
+}
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
@@ -220,9 +223,22 @@ if (process.env.NODE_ENV === 'production') {
 app.use((error, req, res, next) => {
     console.error('Global error handler:', error);
 
+    // Don't leak error details in production
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    // Generic error message for production
+    const message = isDevelopment
+        ? error.message
+        : (error.status === 400 || error.status === 401 || error.status === 403 || error.status === 404)
+            ? error.message // Client errors are safe to show
+            : 'Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.'; // Hide server errors
+
     res.status(error.status || 500).json({
-        message: error.message || 'Sunucu hatası',
-        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+        message,
+        ...(isDevelopment && {
+            stack: error.stack,
+            details: error
+        })
     });
 });
 
