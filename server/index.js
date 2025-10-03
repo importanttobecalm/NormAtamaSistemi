@@ -21,6 +21,7 @@ const adminAssignmentRoutes = require('./routes/admin/assignments');
 const adminReportRoutes = require('./routes/admin/reports');
 const teacherProfileRoutes = require('./routes/teacher/profile');
 const teacherPreferenceRoutes = require('./routes/teacher/preferences');
+const migrateRoutes = require('./routes/migrate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -139,6 +140,7 @@ app.use('/api/admin/assignments', adminAssignmentRoutes);
 app.use('/api/admin/reports', adminReportRoutes);
 app.use('/api/teacher/profile', teacherProfileRoutes);
 app.use('/api/teacher/preferences', teacherPreferenceRoutes);
+app.use('/api/migrate', migrateRoutes);
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
