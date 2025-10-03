@@ -121,13 +121,60 @@ app.use('/api', (req, res, next) => {
 // Şüpheli aktivite tespiti
 app.use(detectSuspiciousActivity);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+// Health check endpoint with migration support
+app.get('/health', async (req, res) => {
+    // Check for migration query parameter
+    if (req.query.migrate === 'refresh-tokens') {
+        try {
+            const { pool } = require('./config/database');
+
+            // Check if table exists
+            const [existingTables] = await pool.execute(
+                "SHOW TABLES LIKE 'refresh_tokens'"
+            );
+
+            if (existingTables.length > 0) {
+                return res.json({
+                    status: 'OK',
+                    migration: 'already_exists',
+                    message: 'refresh_tokens table already exists'
+                });
+            }
+
+            // Create the table
+            await pool.execute(`
+                CREATE TABLE refresh_tokens (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL,
+                    user_type ENUM('admin', 'teacher') NOT NULL,
+                    token VARCHAR(512) NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_token (token(255)),
+                    INDEX idx_user_id (user_id)
+                )
+            `);
+
+            res.json({
+                status: 'OK',
+                migration: 'success',
+                message: 'refresh_tokens table created successfully'
+            });
+        } catch (error) {
+            return res.status(500).json({
+                status: 'ERROR',
+                migration: 'failed',
+                error: error.message
+            });
+        }
+    } else {
+        // Normal health check
+        res.json({
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development'
+        });
+    }
 });
 
 // Routes
