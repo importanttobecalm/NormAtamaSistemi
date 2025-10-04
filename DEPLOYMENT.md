@@ -1,57 +1,124 @@
-# Railway.app Deployment Guide
+# Deployment Rehberi
 
-## Hazırlık Tamamlandı ✅
-Projeniz Railway deployment için hazır!
+Bu rehber, projeyi Railway platformuna deploy etme adımlarını açıklamaktadır.
 
-## Adım 1: GitHub Repository Oluşturma
+## Gereksinimler
 
-1. GitHub'da yeni repository oluştur: https://github.com/new
-2. Repository adı: `norm-atama-sistemi` (veya istediğin bir isim)
-3. **Public** veya **Private** seç
-4. `.gitignore` ve `README` ekleme (zaten var)
+- [Railway CLI](https://docs.railway.app/develop/cli) veya Railway Dashboard erişimi
+- GitHub hesabı (GitHub üzerinden deploy için)
+- Proje dosyalarının hazır olması
 
-## Adım 2: Kodu GitHub'a Yükle
+## 1. Yöntem: Railway CLI ile Deploy
 
-Komut satırında şu komutları çalıştır:
+### Adım 1: Railway CLI Kurulumu
 
 ```bash
-git add .
-git commit -m "Initial commit - Railway deployment ready"
-git remote add origin https://github.com/KULLANICI_ADIN/REPO_ADIN.git
-git branch -M main
-git push -u origin main
+# NPM ile
+npm install -g @railway/cli
+
+# Brew ile (macOS)
+brew install railway
+
+# Windows (scoop)
+scoop install railway
 ```
 
-## Adım 3: Railway Hesabı Oluşturma
+### Adım 2: Railway'e Giriş Yapma
 
-1. https://railway.app adresine git
-2. **GitHub ile Sign Up** yap
-3. Railway'in GitHub repository'lerine erişmesine izin ver
+```bash
+railway login
+```
 
-## Adım 4: MySQL Database Oluşturma
+### Adım 3: Proje Oluşturma ve Deploy
 
-1. Railway Dashboard'da **+ New** → **Database** → **Add MySQL**
-2. Database oluşturulduktan sonra **Variables** sekmesinden şu bilgileri not al:
+```bash
+# Proje dizininde
+railway init
+
+# Deploy et
+railway up
+```
+
+### Adım 4: Environment Variables Ayarlama
+
+Railway Dashboard'dan veya CLI ile environment variables ekleyin:
+
+```bash
+railway variables set NODE_ENV=production
+railway variables set JWT_SECRET=<güvenli-random-secret>
+railway variables set JWT_REFRESH_SECRET=<güvenli-random-secret>
+railway variables set PORT=5000
+```
+
+**Güvenli secret oluşturmak için:**
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### Adım 5: MySQL Database Ekleme
+
+Railway Dashboard'dan:
+1. **New** → **Database** → **Add MySQL**
+2. Database oluşturulduktan sonra otomatik olarak environment variables eklenir:
    - `MYSQLHOST`
    - `MYSQLPORT`
    - `MYSQLUSER`
    - `MYSQLPASSWORD`
    - `MYSQLDATABASE`
 
-3. **Data** sekmesine git
-4. Query editor'da `server/database/schema.sql` dosyasının içeriğini yapıştır ve çalıştır
-5. Tüm tabloların oluştuğunu kontrol et
+### Adım 6: Database Schema Import
 
-## Adım 5: Backend Service Deploy Etme
+Railway Dashboard → MySQL → **Data** sekmesinden:
+1. Query editor'ı açın
+2. `server/database/schema.sql` dosyasının içeriğini kopyalayın
+3. Query editor'a yapıştırıp çalıştırın
+4. `server/database/assignments_table.sql` için de aynısını yapın
 
-1. Railway Dashboard'da **+ New** → **GitHub Repo**
-2. Repository'ni seç: `norm-atama-sistemi`
-3. Service oluşturulduktan sonra **Settings** → **Variables** ekle:
+### Adım 7: Domain Oluşturma
+
+```bash
+# Railway domain oluştur
+railway domain
+```
+
+Bu size otomatik olarak `*.up.railway.app` formatında bir domain verecektir.
+
+---
+
+## 2. Yöntem: GitHub üzerinden Deploy
+
+### Adım 1: GitHub Repository Oluşturma
+
+1. GitHub'da yeni repository oluşturun
+2. Repository'yi public veya private olarak ayarlayın
+
+### Adım 2: Kodu GitHub'a Push Etme
+
+```bash
+git remote add origin https://github.com/username/repo-name.git
+git branch -M master
+git push -u origin master
+```
+
+### Adım 3: Railway'de GitHub Deploy
+
+1. [Railway Dashboard](https://railway.app)'a gidin
+2. **New Project** → **Deploy from GitHub repo**
+3. Repository'nizi seçin
+4. Railway otomatik olarak build ve deploy işlemini başlatacaktır
+
+### Adım 4: Environment Variables Ekleme
+
+Railway Dashboard'da:
+1. Projenize tıklayın
+2. **Variables** sekmesine gidin
+3. Aşağıdaki değişkenleri ekleyin:
 
 ```
-PORT=5000
 NODE_ENV=production
-JWT_SECRET=güçlü_bir_secret_key_buraya_yaz
+JWT_SECRET=<güvenli-secret>
+JWT_REFRESH_SECRET=<güvenli-secret>
+PORT=5000
 DB_HOST=${{MySQL.MYSQLHOST}}
 DB_USER=${{MySQL.MYSQLUSER}}
 DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
@@ -59,80 +126,138 @@ DB_NAME=${{MySQL.MYSQLDATABASE}}
 DB_PORT=${{MySQL.MYSQLPORT}}
 ```
 
-4. **Settings** → **Networking** → **Generate Domain** ile public URL oluştur
-
-## Adım 6: Environment Variables'ı Bağlama
-
-Database config dosyasında PORT desteği eklenmiş değil, ekleyelim:
-
-`server/config/database.js` dosyasını şu şekilde güncelle:
-
-```javascript
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,  // Bu satırı ekle
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'norm_atama_db',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    charset: 'utf8mb4'
-};
-```
-
-## Adım 7: Deploy & Test
-
-1. Değişiklikleri push et:
-```bash
-git add .
-git commit -m "Add DB_PORT support for Railway"
-git push
-```
-
-2. Railway otomatik olarak yeniden deploy edecek
-3. Deployment loglarını kontrol et
-4. Database bağlantısının başarılı olduğunu doğrula
-5. Public URL'i tarayıcıda aç
-
-## Railway ile Ücretsiz Domain
-
-Railway otomatik olarak şu formatta ücretsiz domain sağlar:
-- `your-app-name-production.up.railway.app`
-
-## Custom Domain Ekleme (İsteğe Bağlı)
-
-1. Railway Dashboard → Service → **Settings** → **Domains**
-2. **Custom Domain** ekle (kendi domain'in varsa)
-3. DNS ayarlarını Railway'in gösterdiği gibi yap
-
-## Notlar
-
-### Ücretsiz Plan Limitleri:
-- Aylık $5 ücretsiz kredi
-- 500 saat execution time
-- 100 GB network egress
-- Projeyi durdurmak istersen: Dashboard → Service → **Settings** → **Sleep**
-
-### Database Yedekleme:
-Railway MySQL'de otomatik backup yok (ücretsiz planda). Periyodik olarak yedek almak için:
-```bash
-mysqldump -h MYSQLHOST -P MYSQLPORT -u MYSQLUSER -p MYSQLDATABASE > backup.sql
-```
-
-### Sorun Giderme:
-- **Build Failed**: Logs sekmesinden detaylı hata mesajlarını kontrol et
-- **Database Connection Error**: Environment variables'ları doğru girdiğini kontrol et
-- **500 Error**: Server logs'lara bak (Railway Dashboard → Deployments → View Logs)
-
-## Deployment Sonrası
-
-1. Admin user oluştur (database'de zaten var)
-2. Test öğretmenleriyle giriş yap
-3. Tüm fonksiyonları test et
-4. Production URL'i paylaş!
+**Not:** `${{MySQL.*}}` formatı Railway'in otomatik variable reference sistemidir.
 
 ---
 
-**Railway Dashboard**: https://railway.app/dashboard
-**Docs**: https://docs.railway.app/
+## 3. Custom Domain Ekleme (Opsiyonel)
+
+Railway Dashboard'dan:
+1. Projenize gidin
+2. **Settings** → **Domains**
+3. **Custom Domain** ekleyin
+4. DNS sağlayıcınızda Railway'in belirttiği CNAME kaydını oluşturun
+5. DNS propagation için 24 saat bekleyin
+
+---
+
+## 4. CORS Ayarları
+
+Production domain'inizi `server/index.js` dosyasındaki CORS ayarlarına ekleyin:
+
+```javascript
+const corsOptions = {
+    origin: [
+        'http://localhost:3000',
+        'https://your-app.up.railway.app',
+        'https://your-custom-domain.com'
+    ],
+    credentials: true
+};
+```
+
+---
+
+## 5. Monitoring ve Logs
+
+### Logs İzleme
+
+```bash
+# CLI ile
+railway logs
+
+# veya Railway Dashboard → Deployments → View Logs
+```
+
+### Deploy Status
+
+```bash
+railway status
+```
+
+### Environment Variables Kontrol
+
+```bash
+railway variables
+```
+
+---
+
+## 6. Troubleshooting
+
+### Build Hatası
+
+```bash
+# Detaylı logları kontrol edin
+railway logs
+
+# Local'de build test edin
+npm run build
+```
+
+### Database Connection Error
+
+1. Environment variables'ları kontrol edin
+2. MySQL service'inin aktif olduğunu doğrulayın
+3. Database credentials'ları Railway MySQL variables ile eşleştirin
+
+### 500 Server Error
+
+1. Railway logs'u kontrol edin
+2. Environment variables eksik mi kontrol edin
+3. Database migration'ların tamamlandığını doğrulayın
+
+### Port Issues
+
+Railway otomatik olarak `PORT` environment variable atar. `server/index.js` dosyasında:
+
+```javascript
+const PORT = process.env.PORT || 5000;
+```
+
+---
+
+## 7. Production Checklist
+
+Deploy öncesi kontrol listesi:
+
+- [ ] Tüm environment variables ayarlandı mı?
+- [ ] JWT secrets güçlü ve unique mi?
+- [ ] Database schema import edildi mi?
+- [ ] CORS production domain'leri eklendi mi?
+- [ ] `.env` dosyası `.gitignore`'da mı?
+- [ ] Hassas bilgiler repository'de yok mu?
+- [ ] Admin default şifresi değiştirildi mi?
+- [ ] Production build test edildi mi?
+
+---
+
+## 8. Deployment Sonrası
+
+1. **Health Check:** `https://your-app.up.railway.app/health`
+2. **Admin Login:** Default admin şifresini değiştirin
+3. **Test:** Tüm özellikleri test edin
+4. **Monitor:** İlk 24 saat logları takip edin
+
+---
+
+## Faydalı Linkler
+
+- [Railway Documentation](https://docs.railway.app/)
+- [Railway CLI Reference](https://docs.railway.app/develop/cli)
+- [Railway Dashboard](https://railway.app/dashboard)
+
+---
+
+## Ücretsiz Plan Limitleri
+
+Railway ücretsiz planında:
+- **Execution Time:** 500 saat/ay
+- **Network Egress:** 100GB/ay
+- **Database:** 1GB storage
+
+Limitler hakkında detaylı bilgi: [Railway Pricing](https://railway.app/pricing)
+
+---
+
+**Son Güncelleme:** 4 Ekim 2025
