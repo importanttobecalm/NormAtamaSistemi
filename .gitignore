@@ -84,3 +84,7 @@ NOTES.md
 # Local configuration
 .claude/
 .cursor/
+
+# Windows null device files (accidentally created)
+nul
+NUL
