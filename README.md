@@ -365,7 +365,6 @@ NormAtamaSistemi/
 ├── .dockerignore
 ├── SECURITY-CHECKLIST.md            # Security guidelines
 ├── SECURITY.md                      # Security documentation
-├── CLAUDE.md                        # Development guide
 ├── README.md                        # This file
 └── package.json                     # Root package
 ```
@@ -462,6 +461,13 @@ npm run install-all  # Tüm dependencies
 - ✅ İstatistikler ve raporlama
 - ✅ Atama algoritması
 
+### v1.1.1 (Mevcut ✅)
+- ✅ Case-insensitive branş karşılaştırması (bug fix)
+- ✅ Gelişmiş hata mesajları ve loglama
+- ✅ Boş tercih kaydı desteği
+- ✅ Frontend hata gösterim iyileştirmeleri
+- ✅ Güvenlik güncellemeleri
+
 ### v1.2 (Planlanan)
 - [ ] E-posta bildirimleri
 - [ ] Şifre sıfırlama (forgot password)
@@ -534,26 +540,16 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 - **GitHub Issues:** [Sorun bildir](https://github.com/importanttobecalm/NormAtamaSistemi/issues)
 - **GitHub Discussions:** [Soru sor](https://github.com/importanttobecalm/NormAtamaSistemi/discussions)
 
-## 👥 Contributors
-
-Bu proje aşağıdaki kişiler tarafından geliştirilmiştir:
-
-### Core Team
+## 👥 Geliştirici
 
 **[@importanttobecalm](https://github.com/importanttobecalm)**
-- 💻 Project Owner & Lead Developer
+- 💻 Project Owner & Full Stack Developer
 - 🏗️ System Architecture & Design
 - 🎨 UI/UX Implementation
-- 📊 Database Design
+- 📊 Database Design & Optimization
+- 🔒 Security Implementation
 - 🚀 DevOps & Deployment
-
-**Claude (Anthropic AI)**
-- 🤖 AI Development Assistant
-- 💡 Code Architecture & Best Practices
-- 🔒 Security Implementation & Hardening
-- 📝 Documentation & Technical Writing
-- 🐛 Bug Detection & Resolution
-- ⚡ Performance Optimization
+- 📝 Documentation
 
 ### Katkılar
 
@@ -563,9 +559,9 @@ Bu proje aşağıdaki kişiler tarafından geliştirilmiştir:
 - Excel import/export özellikleri
 - Atama algoritması implementasyonu
 - Production deployment & optimization
-- Comprehensive documentation
+- Güvenlik optimizasyonları
 
-**Katkıda bulunmak ister misiniz?** [CONTRIBUTING.md](./CONTRIBUTING.md) dosyasını inceleyin veya issue açın!
+**Katkıda bulunmak ister misiniz?** Issue açın veya pull request gönderin!
 
 ---
 
@@ -585,6 +581,6 @@ Bu proje aşağıdaki açık kaynak projelerini kullanmaktadır:
 
 **Not:** Bu proje eğitim ve araştırma amaçlıdır. Production kullanımı öncesinde [SECURITY-CHECKLIST.md](./SECURITY-CHECKLIST.md) dosyasını mutlaka inceleyin.
 
-**Son Güncelleme:** 2 Ekim 2025
-**Versiyon:** 1.1.0
+**Son Güncelleme:** 4 Ekim 2025
+**Versiyon:** 1.1.1
 **Durum:** ✅ Production Ready
