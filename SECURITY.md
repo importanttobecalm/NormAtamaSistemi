@@ -62,6 +62,22 @@ Bu dokümanda Norm Atama Sistemi'nde uygulanan güvenlik önlemleri açıklanmak
 - Plaintext şifre asla saklanmaz
 - Login hata mesajları generic (kullanıcı adı/şifre bilgisi verilmez)
 
+### File Upload Security
+- **Multer** ile file upload handling
+- Dosya boyutu limiti: 10MB
+- MIME type validation (sadece Excel: .xls, .xlsx)
+- Memory storage (disk'e yazılmıyor)
+- Tek seferde 1 dosya yükleme limiti
+
+### Production-Specific Security
+- **Setup Endpoints**: Development-only (production'da kapalı)
+  - `/api/setup-db/*` sadece development'ta erişilebilir
+  - Database initialization endpoint'leri korunuyor
+- **Error Details**: Production'da generic mesajlar
+  - Server hataları (5xx) detay vermez
+  - Sadece client hataları (4xx) spesifik mesaj verir
+  - Stack trace production'da gizli
+
 ## 📊 Audit & Monitoring
 
 ### Audit Logging
@@ -226,9 +242,33 @@ curl -X POST http://localhost:5000/api/auth/admin/login -d '{"username":"admin'\
 - `xss-clean` - XSS sanitization
 - `rate-limit-redis` - Distributed rate limiting
 
-## 🆘 Support
+## 🆘 Security Vulnerability Reporting
 
 Güvenlik açığı bulursanız:
-1. Issue açmayın (public disclosure riski)
-2. Doğrudan developer'a ulaşın
-3. Detaylı açıklama ve reproduction steps sağlayın
+1. **Public disclosure yapmayın** (GitHub Issues kullanmayın)
+2. Doğrudan proje sahibine ulaşın: [@importanttobecalm](https://github.com/importanttobecalm)
+3. Şu bilgileri sağlayın:
+   - Açık detaylı açıklama
+   - Reproduction steps (adım adım)
+   - Etki analizi (severity assessment)
+   - Önerilen çözüm (varsa)
+
+## 📋 Security Checklist Özeti
+
+Production'a deploy etmeden önce:
+- ✅ JWT secrets güçlü ve unique
+- ✅ Database şifreleri güvenli
+- ✅ HTTPS/SSL aktif
+- ✅ Default admin şifresi değiştirildi
+- ✅ Rate limiting aktif
+- ✅ Security headers yapılandırıldı
+- ✅ Error messages generic
+- ✅ `.env` dosyası git'te yok
+
+Detaylı kontrol listesi için: [SECURITY-CHECKLIST.md](./SECURITY-CHECKLIST.md)
+
+---
+
+**Son Güncelleme:** 4 Ekim 2025
+**Güvenlik Versiyonu:** 1.1.1
+**Durum:** ✅ Production Ready
