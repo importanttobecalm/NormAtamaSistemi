@@ -58,12 +58,15 @@ router.get('/my-preferences/:periodId?', teacherAuthMiddleware, async (req, res)
 router.post('/save', teacherAuthMiddleware, validatePreferences, async (req, res) => {
     try {
         const { preferences } = req.body;
+        console.log('Saving preferences for teacher:', req.user.tcId);
+        console.log('Preferences to save:', preferences);
 
         // Check if preference period is active
         await PreferencePeriod.updateStatus();
         const activePeriod = await PreferencePeriod.getActivePeriod();
 
         if (!activePeriod) {
+            console.log('No active period found');
             return res.status(400).json({ message: 'Aktif tercih dönemi bulunamadı' });
         }
 
@@ -71,12 +74,19 @@ router.post('/save', teacherAuthMiddleware, validatePreferences, async (req, res
         const isActive = new Date(activePeriod.start_date) <= now && new Date(activePeriod.end_date) >= now;
 
         if (!isActive || activePeriod.status !== 'active') {
+            console.log('Period not active');
             return res.status(400).json({ message: 'Tercih dönemi aktif değil' });
         }
 
         // Validate preferences
-        if (preferences.length > 25) {
+        if (preferences && preferences.length > 25) {
             return res.status(400).json({ message: 'En fazla 25 tercih yapılabilir' });
+        }
+
+        // Allow empty preferences (user can clear all preferences)
+        if (!preferences || preferences.length === 0) {
+            await Preference.savePreferences(req.user.tcId, activePeriod.id, []);
+            return res.json({ message: 'Tercihler başarıyla kaydedildi' });
         }
 
         // Check for duplicate positions
@@ -100,7 +110,8 @@ router.post('/save', teacherAuthMiddleware, validatePreferences, async (req, res
             if (!position) {
                 return res.status(400).json({ message: `Geçersiz pozisyon: ${pref.positionId}` });
             }
-            if (position.branch !== teacher.branch) {
+            // Case-insensitive branch comparison
+            if (position.branch.toLowerCase() !== teacher.branch.toLowerCase()) {
                 return res.status(400).json({ message: 'Sadece kendi branşınıza ait pozisyonları seçebilirsiniz' });
             }
             if (position.status !== 'active') {
@@ -110,6 +121,7 @@ router.post('/save', teacherAuthMiddleware, validatePreferences, async (req, res
 
         // Save preferences
         await Preference.savePreferences(req.user.tcId, activePeriod.id, preferences);
+        console.log('Preferences saved successfully');
 
         res.json({ message: 'Tercihler başarıyla kaydedildi' });
     } catch (error) {

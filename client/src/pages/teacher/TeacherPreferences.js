@@ -105,14 +105,20 @@ const TeacherPreferences = () => {
         rank: index + 1,
       }));
 
-      await axios.post('/teacher/preferences/save', {
+      const response = await axios.post('/teacher/preferences/save', {
         periodId: activePeriodId,
         preferences: preferencesToSave
       });
-      alert('Tercihleriniz başarıyla kaydedildi.');
+      alert(response.data.message || 'Tercihleriniz başarıyla kaydedildi.');
       fetchData(); // Re-fetch to confirm
     } catch (err) {
-      alert('Tercihler kaydedilirken bir hata oluştu.');
+      const errorMessage = err.response?.data?.message || 'Tercihler kaydedilirken bir hata oluştu.';
+      console.error('Full error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: errorMessage
+      });
+      alert(errorMessage);
       console.error('Save preferences error:', err);
     } finally {
       setSaving(false);
